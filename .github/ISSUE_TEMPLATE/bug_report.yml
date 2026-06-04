@@ -1,0 +1,34 @@
+name: Bug report
+description: Something broke on web, Android, or iOS
+labels: ["bug"]
+body:
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Web (browser)
+        - Android
+        - iOS
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: "1. Open … 2. Tap … 3. See error"
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: What happened instead
+    validations:
+      required: true

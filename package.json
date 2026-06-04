@@ -1,0 +1,78 @@
+{
+  "name": "locudoc",
+  "description": "Privacy-first document & image toolkit — 13 on-device PDF tools, cover pages, Excel cross-check, gov-job photo sizes. Expo for Android, iOS & Web.",
+  "version": "1.0.0",
+  "author": "Tarqul Alam Opi <tarqulopi77@gmail.com> (https://github.com/taopi74)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/taopi74/LocuDoc.git"
+  },
+  "homepage": "https://github.com/taopi74/LocuDoc#readme",
+  "bugs": {
+    "url": "https://github.com/taopi74/LocuDoc/issues"
+  },
+  "keywords": [
+    "expo",
+    "react-native",
+    "pdf",
+    "pdf-lib",
+    "offline",
+    "privacy",
+    "document-toolkit",
+    "image-resizer",
+    "excel",
+    "typescript"
+  ],
+  "main": "expo-router/entry",
+  "dependencies": {
+    "@expo-google-fonts/hanken-grotesk": "^0.4.3",
+    "@expo-google-fonts/inter": "^0.4.2",
+    "@expo/vector-icons": "^15.0.2",
+    "exceljs": "^4.4.0",
+    "expo": "~56.0.8",
+    "expo-constants": "~56.0.16",
+    "expo-document-picker": "~56.0.4",
+    "expo-file-system": "~56.0.7",
+    "expo-font": "~56.0.5",
+    "expo-image": "~56.0.9",
+    "expo-image-manipulator": "~56.0.16",
+    "expo-image-picker": "~56.0.15",
+    "expo-linking": "~56.0.13",
+    "expo-media-library": "~56.0.6",
+    "expo-router": "~56.2.8",
+    "expo-sharing": "~56.0.15",
+    "expo-splash-screen": "~56.0.10",
+    "expo-status-bar": "~56.0.4",
+    "expo-system-ui": "~56.0.5",
+    "fflate": "^0.8.3",
+    "pdf-lib": "^1.17.1",
+    "react": "19.2.3",
+    "react-dom": "19.2.3",
+    "react-native": "0.85.3",
+    "react-native-gesture-handler": "~2.31.1",
+    "react-native-reanimated": "4.3.1",
+    "react-native-safe-area-context": "~5.7.0",
+    "react-native-screens": "4.25.2",
+    "react-native-view-shot": "5.1.0",
+    "react-native-web": "~0.21.0",
+    "react-native-worklets": "0.8.3",
+    "xlsx": "https://cdn.sheetjs.com/xlsx-0.20.3/xlsx-0.20.3.tgz"
+  },
+  "devDependencies": {
+    "@types/react": "~19.2.2",
+    "puppeteer-core": "^25.1.0",
+    "typescript": "~6.0.3"
+  },
+  "scripts": {
+    "start": "expo start",
+    "reset-project": "node ./scripts/reset-project.js",
+    "android": "expo start --android",
+    "ios": "expo start --ios",
+    "web": "expo start --web",
+    "smoke:web": "node ./scripts/smoke-web.js",
+    "typecheck": "tsc --noEmit",
+    "lint": "expo lint"
+  },
+  "private": false
+}

@@ -1,0 +1,81 @@
+:root {
+  --font-display: 'Inter', ui-sans-serif, system-ui, sans-serif;
+  --font-serif: Georgia, 'Times New Roman', serif;
+  --font-rounded: 'SF Pro Rounded', ui-rounded, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  --color-canvas: #f9fafb;
+  --color-primary: #2563eb;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+html,
+body,
+#root {
+  height: 100%;
+  background-color: var(--color-canvas);
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+::selection {
+  background: rgba(37, 99, 235, 0.18);
+  color: #0b1623;
+}
+
+@keyframes banner-drift-a {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(-12px, 8px) scale(1.06);
+  }
+}
+
+@keyframes banner-drift-b {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(10px, -6px) scale(1.04);
+  }
+}
+
+.banner-blob-a {
+  animation: banner-drift-a 9s var(--ease-out) infinite;
+}
+
+.banner-blob-b {
+  animation: banner-drift-b 11s var(--ease-out) infinite;
+}
+
+/* STAFF REPORT style — floating shapes rise behind content */
+.floating-shape {
+  position: absolute;
+  bottom: -200px;
+  animation: float-up var(--float-dur, 25s) linear infinite;
+  animation-delay: var(--float-delay, 0s);
+}
+
+@keyframes float-up {
+  0% {
+    transform: translateY(0) rotate(0deg) scale(1);
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translateY(-120vh) rotate(720deg) scale(0.5);
+    opacity: 0;
+  }
+}

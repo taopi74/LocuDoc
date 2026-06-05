@@ -271,20 +271,11 @@ export async function editMetadata(bytes: Uint8Array, patch: MetadataPatch): Pro
   return pdf.save();
 }
 
-/** Convert plain text to a simple A4 PDF. */
-export async function textToPdf(text: string): Promise<Uint8Array> {
-  const content = text.trim();
-  if (!content) throw new Error('Enter some text first.');
-  const pdf = await PDFDocument.create();
-  const font = await pdf.embedFont(StandardFonts.Helvetica);
-  const fontSize = 12;
-  const margin = 48;
-  const pageW = 595.28;
-  const pageH = 841.89;
-  const maxWidth = pageW - margin * 2;
-  const lineHeight = fontSize * 1.4;
+const A4_W = 595.28;
+const A4_H = 841.89;
 
-  const paragraphs = content.split(/\n/);
+function wrapTextLines(text: string, font: Awaited<ReturnType<PDFDocument['embedFont']>>, fontSize: number, maxWidth: number) {
+  const paragraphs = text.split(/\n/);
   const lines: string[] = [];
   for (const para of paragraphs) {
     if (!para.trim()) {
@@ -304,18 +295,52 @@ export async function textToPdf(text: string): Promise<Uint8Array> {
     }
     if (line) lines.push(line);
   }
+  return lines;
+}
 
-  let page = pdf.addPage([pageW, pageH]);
-  let y = pageH - margin;
+function drawWrappedLines(
+  pdf: PDFDocument,
+  lines: string[],
+  font: Awaited<ReturnType<PDFDocument['embedFont']>>,
+  fontSize: number,
+  margin: number,
+  lineHeight: number
+) {
+  let page = pdf.addPage([A4_W, A4_H]);
+  let y = A4_H - margin;
   for (const line of lines) {
     if (y < margin) {
-      page = pdf.addPage([pageW, pageH]);
-      y = pageH - margin;
+      page = pdf.addPage([A4_W, A4_H]);
+      y = A4_H - margin;
     }
     if (line) {
       page.drawText(line, { x: margin, y, size: fontSize, font, color: rgb(0.1, 0.1, 0.1) });
     }
     y -= lineHeight;
   }
+}
+
+/** Convert plain text (or one string per editor page) to a simple A4 PDF. */
+export async function textToPdf(textOrPages: string | string[]): Promise<Uint8Array> {
+  const pages = Array.isArray(textOrPages) ? [...textOrPages] : [textOrPages];
+  while (pages.length > 1 && !pages[pages.length - 1].trim()) pages.pop();
+  if (!pages.some((p) => p.trim())) throw new Error('Enter some text first.');
+
+  const pdf = await PDFDocument.create();
+  const font = await pdf.embedFont(StandardFonts.Helvetica);
+  const fontSize = 12;
+  const margin = 48;
+  const maxWidth = A4_W - margin * 2;
+  const lineHeight = fontSize * 1.4;
+
+  for (const pageText of pages) {
+    if (!pageText.trim()) {
+      pdf.addPage([A4_W, A4_H]);
+      continue;
+    }
+    const lines = wrapTextLines(pageText, font, fontSize, maxWidth);
+    drawWrappedLines(pdf, lines, font, fontSize, margin, lineHeight);
+  }
+
   return pdf.save();
 }

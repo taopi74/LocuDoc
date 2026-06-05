@@ -1,3 +1,4 @@
+import { fitJpegUnderBytes } from './encode-under-limit';
 import { centerCropRect, mimeFor, type ProcessArgs, type ProcessResult } from './types';
 
 function loadImage(src: string): Promise<HTMLImageElement> {
@@ -18,7 +19,7 @@ function toBlob(canvas: HTMLCanvasElement, mime: string, quality: number): Promi
 
 /**
  * Web: center-crop to the target aspect, resize to exact pixels, encode to the
- * chosen format, and (for JPEG) step the quality down until the size fits.
+ * chosen format, and (for JPEG) tune quality until the size fits maxBytes.
  */
 export async function processImage(args: ProcessArgs): Promise<ProcessResult> {
   const { uri, targetW, targetH, format, maxBytes } = args;
@@ -49,22 +50,25 @@ export async function processImage(args: ProcessArgs): Promise<ProcessResult> {
   );
 
   const mime = mimeFor(format);
-  let quality = 0.92;
-  let blob = await toBlob(canvas, mime, quality);
-  if (maxBytes && format === 'jpeg') {
-    while (blob.size > maxBytes && quality > 0.3) {
-      quality -= 0.08;
-      blob = await toBlob(canvas, mime, quality);
-    }
-  }
 
-  const bytes = new Uint8Array(await blob.arrayBuffer());
+  const tryEncode = async (quality: number) => {
+    const blob = await toBlob(canvas, mime, quality);
+    const bytes = new Uint8Array(await blob.arrayBuffer());
+    return { bytes, sizeBytes: bytes.length };
+  };
+
+  const encoded =
+    maxBytes && format === 'jpeg'
+      ? await fitJpegUnderBytes(tryEncode, maxBytes)
+      : await tryEncode(0.92);
+
+  const previewBlob = new Blob([encoded.bytes as BlobPart], { type: mime });
   return {
-    bytes,
-    previewUri: URL.createObjectURL(blob),
+    bytes: encoded.bytes,
+    previewUri: URL.createObjectURL(previewBlob),
     width: targetW,
     height: targetH,
     mime,
-    sizeBytes: blob.size,
+    sizeBytes: encoded.sizeBytes,
   };
 }

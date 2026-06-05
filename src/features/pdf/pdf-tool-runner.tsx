@@ -29,6 +29,8 @@ import {
   textToPdf,
   type PageNumberPosition,
 } from '@/features/pdf/operations';
+import { textToDoc } from '@/features/pdf/text-to-doc';
+import { TextToPdfEditor } from '@/features/pdf/text-to-pdf-editor';
 import { zipPdfs } from '@/features/pdf/zip-pdfs';
 import { useTheme } from '@/hooks/use-theme';
 import { pdfBaseName, pdfOutputName, pickPdfs, type PickedPdf } from '@/lib/pick-pdf';
@@ -135,7 +137,12 @@ export function PdfToolRunner({ toolId }: Props) {
   const [metaTitle, setMetaTitle] = useState('');
   const [metaAuthor, setMetaAuthor] = useState('');
   const [metaSubject, setMetaSubject] = useState('');
-  const [plainText, setPlainText] = useState('');
+  const [textPages, setTextPages] = useState<string[]>(['']);
+  const [currentTextPage, setCurrentTextPage] = useState(0);
+  const [generatedPdfBytes, setGeneratedPdfBytes] = useState<Uint8Array | null>(null);
+  const [generatedPdfFilename, setGeneratedPdfFilename] = useState('');
+  const [generatedDocBytes, setGeneratedDocBytes] = useState<Uint8Array | null>(null);
+  const [generatedDocFilename, setGeneratedDocFilename] = useState('');
 
   const primaryFile = files[0];
   const needsPagePicker =
@@ -167,8 +174,10 @@ export function PdfToolRunner({ toolId }: Props) {
     };
   }, [primaryFile]);
 
+  const hasTextContent = textPages.some((p) => p.trim().length > 0);
+
   const canRun = useMemo(() => {
-    if (toolId === 'text-to-pdf') return plainText.trim().length > 0;
+    if (toolId === 'text-to-pdf') return hasTextContent;
     if (toolId === 'merge-pdf') return files.length >= 2;
     if (!primaryFile) return false;
     if (needsPagePicker && selectedPages.size === 0) return false;
@@ -189,8 +198,30 @@ export function PdfToolRunner({ toolId }: Props) {
     splitMode,
     rangeStart,
     rangeEnd,
-    plainText,
+    hasTextContent,
   ]);
+
+  function resetTextExports() {
+    setGeneratedPdfBytes(null);
+    setGeneratedPdfFilename('');
+    setGeneratedDocBytes(null);
+    setGeneratedDocFilename('');
+    setTaskComplete(false);
+  }
+
+  function handleTextPagesChange(pages: string[], page?: number) {
+    resetTextExports();
+    const next = pages.length ? pages : [''];
+    setTextPages(next);
+    if (page !== undefined) {
+      setCurrentTextPage(Math.max(0, Math.min(page, next.length - 1)));
+    }
+  }
+
+  function goToTextPage(index: number) {
+    if (index < 0 || index >= textPages.length) return;
+    setCurrentTextPage(index);
+  }
 
   async function pickFiles() {
     setError(null);
@@ -306,9 +337,7 @@ export function PdfToolRunner({ toolId }: Props) {
           filename = pdfOutputName(primaryFile!.name, 'metadata');
           break;
         case 'text-to-pdf':
-          bytes = await textToPdf(plainText);
-          filename = `dockit-text-${Date.now()}.pdf`;
-          break;
+          throw new Error('Use generateTextPdf or generateTextDoc.');
         default:
           throw new Error('Unknown tool.');
       }
@@ -322,24 +351,93 @@ export function PdfToolRunner({ toolId }: Props) {
     }
   }
 
+  async function generateTextPdf() {
+    setBusy(true);
+    setError(null);
+    try {
+      const bytes = await textToPdf(textPages.join(''));
+      const filename = `dockit-text-${Date.now()}.pdf`;
+      setGeneratedPdfBytes(bytes);
+      setGeneratedPdfFilename(filename);
+      setTaskComplete(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'PDF generation failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function generateTextDoc() {
+    setBusy(true);
+    setError(null);
+    try {
+      const bytes = textToDoc(textPages);
+      const filename = `dockit-text-${Date.now()}.doc`;
+      setGeneratedDocBytes(bytes);
+      setGeneratedDocFilename(filename);
+      setTaskComplete(true);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'DOC generation failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function downloadGeneratedTextPdf() {
+    if (!generatedPdfBytes) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await saveBinaryFile(generatedPdfBytes, generatedPdfFilename, 'application/pdf');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Download failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function downloadGeneratedTextDoc() {
+    if (!generatedDocBytes) return;
+    setBusy(true);
+    setError(null);
+    try {
+      await saveBinaryFile(generatedDocBytes, generatedDocFilename, 'application/msword');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Download failed.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   const exportDone = taskComplete;
+  const textPdfReady = toolId === 'text-to-pdf' && !!generatedPdfBytes;
+  const textDocReady = toolId === 'text-to-pdf' && !!generatedDocBytes;
   const inputReady =
     !exportDone &&
     !busy &&
     canRun &&
     (toolId === 'text-to-pdf'
-      ? plainText.trim().length > 0
+      ? hasTextContent
       : toolId === 'merge-pdf'
         ? files.length >= 2
         : !!primaryFile);
-  const showComplete = exportDone || inputReady;
-  const completeMessage = exportDone
-    ? Platform.OS === 'web'
-      ? 'Your file was processed. Download again anytime below.'
-      : 'Your file was processed. Save or share again anytime below.'
-    : 'Your files are ready. Tap Download result below to process and save.';
+  const showComplete = toolId === 'text-to-pdf' ? textPdfReady || textDocReady : exportDone || inputReady;
+  const completeMessage =
+    toolId === 'text-to-pdf'
+      ? textPdfReady && textDocReady
+        ? 'PDF and DOC ready — download below.'
+        : textPdfReady
+          ? 'PDF generated. Download your file below.'
+          : textDocReady
+            ? 'DOC generated. Download your file below.'
+            : undefined
+      : exportDone
+        ? Platform.OS === 'web'
+          ? 'Your file was processed. Download again anytime below.'
+          : 'Your file was processed. Save or share again anytime below.'
+        : 'Your files are ready. Tap Download result below to process and save.';
 
-  const panelFooter = (
+  const defaultPanelFooter = (
     <Button
       label={Platform.OS === 'web' ? 'Download result' : 'Save & share'}
       icon="download-outline"
@@ -440,14 +538,15 @@ export function PdfToolRunner({ toolId }: Props) {
       )}
 
       {toolId === 'text-to-pdf' && (
-        <TextField
-          label="Plain text"
-          value={plainText}
-          onChangeText={setPlainText}
-          multiline
-          style={styles.textArea}
-          hint="Line breaks are preserved."
-        />
+        <>
+          <ToolSectionLabel>Pages</ToolSectionLabel>
+          <ThemedText type="small" themeColor="textSecondary">
+            {textPages.length} page{textPages.length > 1 ? 's' : ''} · {hasTextContent ? 'Ready to export' : 'Add text to continue'}
+          </ThemedText>
+          <ThemedText type="small" themeColor="textMuted">
+            Export as PDF or Word (.doc). Line breaks are preserved.
+          </ThemedText>
+        </>
       )}
 
       {needsPagePicker && pageCount > 0 && (
@@ -480,15 +579,24 @@ export function PdfToolRunner({ toolId }: Props) {
       subtitle={tool.subtitle}
       panel={options}
       panelTitle="Options"
-      panelFooter={panelFooter}
+      panelFooter={toolId === 'text-to-pdf' ? undefined : defaultPanelFooter}
       taskComplete={showComplete}
       taskCompleteMessage={completeMessage}>
       {toolId === 'text-to-pdf' ? (
-        <Card>
-          <ThemedText type="small" themeColor="textSecondary">
-            Type in the panel, then export a clean A4 PDF. No upload needed.
-          </ThemedText>
-        </Card>
+        <TextToPdfEditor
+          pages={textPages}
+          currentPage={currentTextPage}
+          onPagesChange={handleTextPagesChange}
+          onPageChange={goToTextPage}
+          canGenerate={canRun}
+          pdfReady={textPdfReady}
+          docReady={textDocReady}
+          busy={busy}
+          onGeneratePdf={generateTextPdf}
+          onGenerateDoc={generateTextDoc}
+          onDownloadPdf={downloadGeneratedTextPdf}
+          onDownloadDoc={downloadGeneratedTextDoc}
+        />
       ) : files.length === 0 ? (
         <DropZone
           icon="document-outline"
@@ -544,7 +652,6 @@ const styles = StyleSheet.create({
   options: { gap: Spacing.three, paddingBottom: Spacing.two },
   rowFields: { flexDirection: 'row', gap: Spacing.two },
   halfField: { flex: 1 },
-  textArea: { minHeight: 160, textAlignVertical: 'top', paddingTop: Spacing.two },
   pageGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   pageChip: {
     minWidth: 40,

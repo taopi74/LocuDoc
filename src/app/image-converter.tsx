@@ -65,22 +65,26 @@ export default function ImageConverterScreen() {
     }
   }
 
+  async function runProcess(): Promise<ProcessResult> {
+    if (!source) throw new Error('Choose an image first.');
+    return processImage({
+      uri: source.uri,
+      srcW: source.width,
+      srcH: source.height,
+      targetW,
+      targetH,
+      format,
+      maxBytes: effectiveMaxBytes(),
+    });
+  }
+
   async function convert() {
     if (!source) return;
     setBusy(true);
     setError(null);
     setTaskComplete(false);
     try {
-      const res = await processImage({
-        uri: source.uri,
-        srcW: source.width,
-        srcH: source.height,
-        targetW,
-        targetH,
-        format,
-        maxBytes: effectiveMaxBytes(),
-      });
-      setResult(res);
+      setResult(await runProcess());
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not process the image.');
     } finally {
@@ -89,13 +93,19 @@ export default function ImageConverterScreen() {
   }
 
   async function save() {
-    if (!result) return;
-    const ext = format === 'png' ? 'png' : 'jpg';
+    if (!source) return;
+    setBusy(true);
+    setError(null);
     try {
-      await saveBinaryFile(result.bytes, `dockit-${targetW}x${targetH}-${Date.now()}.${ext}`, result.mime);
+      const res = await runProcess();
+      setResult(res);
+      const ext = format === 'png' ? 'png' : 'jpg';
+      await saveBinaryFile(res.bytes, `dockit-${targetW}x${targetH}-${Date.now()}.${ext}`, res.mime);
       setTaskComplete(true);
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Export failed.');
+    } finally {
+      setBusy(false);
     }
   }
 
@@ -174,19 +184,21 @@ export default function ImageConverterScreen() {
 
   const panelFooter = source && (
     <>
-      {!result ? (
-        <Button label="Convert" icon="sparkles" onPress={convert} loading={busy} fullWidth />
-      ) : (
-        <>
-          <Button
-            label={Platform.OS === 'web' ? 'Download' : 'Save & Share'}
-            icon="download-outline"
-            onPress={save}
-            fullWidth
-          />
-          <Button label="Re-convert" icon="refresh" variant="ghost" onPress={convert} loading={busy} fullWidth />
-        </>
-      )}
+      <Button
+        label={Platform.OS === 'web' ? 'Download' : 'Save & Share'}
+        icon="download-outline"
+        onPress={save}
+        loading={busy}
+        fullWidth
+      />
+      <Button
+        label={result ? 'Re-convert preview' : 'Preview'}
+        icon={result ? 'refresh' : 'sparkles'}
+        variant="ghost"
+        onPress={convert}
+        loading={busy}
+        fullWidth
+      />
     </>
   );
 

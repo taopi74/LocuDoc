@@ -1,4 +1,5 @@
 import { Ionicons } from "@expo/vector-icons";
+import { router } from "expo-router";
 import { useMemo, useState } from "react";
 import {
     Platform,
@@ -196,6 +197,15 @@ export default function HomeScreen() {
             Everything runs on your device. No accounts, no uploads — your
             files never leave this app.
           </ThemedText>
+          <Pressable
+            onPress={() => router.push("/feedback")}
+            style={({ pressed }) => [styles.feedbackLink, pressed && { opacity: 0.75 }]}
+          >
+            <Ionicons name="chatbubble-ellipses-outline" size={14} color={theme.primary} />
+            <ThemedText type="linkPrimary" style={styles.feedbackLinkText}>
+              Send feedback
+            </ThemedText>
+          </Pressable>
         </View>
       </Reveal>
     </View>
@@ -374,9 +384,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     maxWidth: 420,
     alignSelf: "center",
+    gap: Spacing.two,
   },
   footerText: {
     textAlign: "center",
     lineHeight: 20,
+  },
+  feedbackLink: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingVertical: Spacing.one,
+  },
+  feedbackLinkText: {
+    fontSize: 13,
   },
 });

@@ -13,13 +13,13 @@ type Tab = {
   id: string;
   label: string;
   icon: React.ComponentProps<typeof Ionicons>['name'];
-  route: '/' | null;
+  route: '/' | '/feedback';
 };
 
 const TABS: Tab[] = [
   { id: 'home', label: 'Home', icon: 'home', route: '/' },
   { id: 'tools', label: 'Tools', icon: 'apps', route: '/' },
-  { id: 'more', label: 'More', icon: 'ellipsis-horizontal', route: null },
+  { id: 'more', label: 'More', icon: 'ellipsis-horizontal', route: '/feedback' },
 ];
 
 export function BottomNav() {
@@ -27,6 +27,7 @@ export function BottomNav() {
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
   const onHome = pathname === '/';
+  const onFeedback = pathname === '/feedback';
   const slide = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -52,19 +53,17 @@ export function BottomNav() {
         barShadow,
       ]}>
       {TABS.map((tab) => {
-        const active = tab.route !== null && onHome;
-        const disabled = tab.route === null;
+        const active =
+          tab.id === 'more' ? onFeedback : tab.id === 'home' ? onHome : onHome;
 
         return (
           <Pressable
             key={tab.id}
-            disabled={disabled}
-            onPress={() => tab.route && router.push(tab.route)}
+            onPress={() => router.push(tab.route)}
             style={({ pressed }) => [
               styles.tab,
               active && { backgroundColor: theme.primary, borderRadius: Radius.lg },
-              disabled && styles.disabled,
-              pressed && !disabled && styles.pressed,
+              pressed && styles.pressed,
             ]}>
             <Ionicons name={tab.icon} size={22} color={active ? theme.onPrimary : theme.textMuted} />
             <ThemedText type="small" style={[styles.label, { color: active ? theme.onPrimary : theme.textMuted }]}>

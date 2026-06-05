@@ -10,6 +10,7 @@ const URLS = [
   'http://localhost:8081/images-to-pdf',
   'http://localhost:8081/image-converter',
   'http://localhost:8081/data-checker',
+  'http://localhost:8081/feedback',
   'http://localhost:8081/pdf-tools',
   'http://localhost:8081/pdf-tools/merge-pdf',
   'http://localhost:8081/pdf-tools/text-to-pdf',

@@ -71,6 +71,18 @@ export function Sidebar() {
             />
           );
         })}
+
+        <ThemedText type="small" themeColor="textMuted" style={styles.sectionLabel}>
+          SUPPORT
+        </ThemedText>
+
+        <NavItem
+          icon="chatbubble-ellipses-outline"
+          label="Send feedback"
+          active={pathname === '/feedback'}
+          accent="#6366F1"
+          onPress={() => router.push('/feedback')}
+        />
       </View>
     </View>
   );

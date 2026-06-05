@@ -1,11 +1,10 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, usePathname, type Href } from 'expo-router';
+import { router, usePathname } from 'expo-router';
 import { useEffect, useRef } from 'react';
-import { Animated, Platform, Pressable, StyleSheet, View } from 'react-native';
+import { Animated, Platform, Pressable, StyleSheet } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
-import { FEATURES } from '@/constants/features';
 import { Motion } from '@/constants/motion';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -14,45 +13,21 @@ type Tab = {
   id: string;
   label: string;
   icon: React.ComponentProps<typeof Ionicons>['name'];
-  route: Href | null;
-  isActive: (pathname: string) => boolean;
+  route: '/' | '/feedback';
 };
 
-function isToolRoute(pathname: string) {
-  return FEATURES.some((f) => {
-    const route = f.route as string;
-    return pathname === route || (f.id === 'pdf-tools' && pathname.startsWith('/pdf-tools'));
-  });
-}
-
 const TABS: Tab[] = [
-  {
-    id: 'home',
-    label: 'Home',
-    icon: 'home',
-    route: '/',
-    isActive: (pathname) => pathname === '/' || pathname === '',
-  },
-  {
-    id: 'tools',
-    label: 'Tools',
-    icon: 'apps',
-    route: '/pdf-tools' as Href,
-    isActive: (pathname) => isToolRoute(pathname),
-  },
-  {
-    id: 'more',
-    label: 'More',
-    icon: 'ellipsis-horizontal',
-    route: '/roadmap' as Href,
-    isActive: (pathname) => pathname === '/roadmap',
-  },
+  { id: 'home', label: 'Home', icon: 'home', route: '/' },
+  { id: 'tools', label: 'Tools', icon: 'apps', route: '/' },
+  { id: 'more', label: 'More', icon: 'ellipsis-horizontal', route: '/feedback' },
 ];
 
 export function BottomNav() {
   const theme = useTheme();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
+  const onHome = pathname === '/';
+  const onFeedback = pathname === '/feedback';
   const slide = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -78,19 +53,17 @@ export function BottomNav() {
         barShadow,
       ]}>
       {TABS.map((tab) => {
-        const active = tab.isActive(pathname);
-        const disabled = tab.route === null;
+        const active =
+          tab.id === 'more' ? onFeedback : tab.id === 'home' ? onHome : onHome;
 
         return (
           <Pressable
             key={tab.id}
-            disabled={disabled}
-            onPress={() => tab.route && router.push(tab.route)}
+            onPress={() => router.push(tab.route)}
             style={({ pressed }) => [
               styles.tab,
               active && { backgroundColor: theme.primary, borderRadius: Radius.lg },
-              disabled && styles.disabled,
-              pressed && !disabled && styles.pressed,
+              pressed && styles.pressed,
             ]}>
             <Ionicons name={tab.icon} size={22} color={active ? theme.onPrimary : theme.textMuted} />
             <ThemedText type="small" style={[styles.label, { color: active ? theme.onPrimary : theme.textMuted }]}>

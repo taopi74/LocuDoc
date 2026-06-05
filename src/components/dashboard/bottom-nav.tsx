@@ -40,7 +40,13 @@ const TABS: Tab[] = [
     route: '/pdf-tools' as Href,
     isActive: (pathname) => isToolRoute(pathname),
   },
-  { id: 'more', label: 'More', icon: 'ellipsis-horizontal', route: null, isActive: () => false },
+  {
+    id: 'more',
+    label: 'More',
+    icon: 'ellipsis-horizontal',
+    route: '/roadmap' as Href,
+    isActive: (pathname) => pathname === '/roadmap',
+  },
 ];
 
 export function BottomNav() {

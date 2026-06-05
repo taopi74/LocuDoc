@@ -74,4 +74,14 @@ export const FEATURES: Feature[] = [
     accent: '#EA580C',
     route: '/data-checker',
   },
+  {
+    id: 'tool-catalog',
+    title: 'Studio Tool Catalog',
+    subtitle: '60+ digital studio tools — live, planned & rollout phases (ID Card Scanner Pro list)',
+    tagline: '60+ tools roadmap',
+    badge: '60+',
+    icon: 'grid',
+    accent: '#4F46E5',
+    route: '/roadmap' as Href,
+  },
 ];

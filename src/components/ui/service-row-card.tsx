@@ -14,6 +14,8 @@ export type ServiceRowCardProps = {
   title: string;
   description: string;
   badge?: string | number;
+  /** Tighter layout for narrow dashboard cards (mobile). */
+  compact?: boolean;
   onPress: () => void;
 };
 
@@ -24,6 +26,7 @@ export function ServiceRowCard({
   title,
   description,
   badge,
+  compact = false,
   onPress,
 }: ServiceRowCardProps) {
   const theme = useTheme();
@@ -33,6 +36,7 @@ export function ServiceRowCard({
       onPress={onPress}
       style={({ pressed, hovered }) => [
         styles.card,
+        compact && styles.cardCompact,
         cardSurface,
         cardShadow,
         cardTransition,
@@ -43,30 +47,47 @@ export function ServiceRowCard({
         hovered && cardShadowHover,
         pressed && styles.pressed,
       ]}>
-      <View style={[styles.icon, { backgroundColor: `${accent}14` }]}>
-        <Ionicons name={icon} size={26} color={accent} />
+      <View
+        style={[
+          styles.icon,
+          compact && styles.iconCompact,
+          { backgroundColor: `${accent}14` },
+        ]}>
+        <Ionicons name={icon} size={compact ? 22 : 26} color={accent} />
       </View>
 
       <View style={styles.body}>
-        <View style={styles.titleRow}>
-          <ThemedText type="smallBold" style={styles.title} numberOfLines={1}>
+        <View style={[styles.titleRow, compact && styles.titleRowCompact]}>
+          <ThemedText
+            type="smallBold"
+            style={[styles.title, compact && styles.titleCompact]}
+            numberOfLines={compact ? 2 : 1}>
             {title}
           </ThemedText>
           {badge != null && badge !== '' && (
-            <View style={[styles.badge, { backgroundColor: `${accent}12` }]}>
-              <ThemedText type="smallBold" style={{ color: accent, fontSize: 12 }}>
+            <View style={[styles.badge, compact && styles.badgeCompact, { backgroundColor: `${accent}12` }]}>
+              <ThemedText type="smallBold" style={{ color: accent, fontSize: compact ? 11 : 12 }}>
                 {badge}
               </ThemedText>
             </View>
           )}
         </View>
-        <ThemedText type="small" themeColor="textSecondary" numberOfLines={2} style={styles.desc}>
+        <ThemedText
+          type="small"
+          themeColor="textSecondary"
+          numberOfLines={compact ? 3 : 2}
+          style={[styles.desc, compact && styles.descCompact]}>
           {description}
         </ThemedText>
       </View>
 
-      <View style={[styles.arrow, { backgroundColor: theme.surfaceContainerHigh }]}>
-        <Ionicons name="arrow-forward" size={16} color={theme.textSecondary} />
+      <View
+        style={[
+          styles.arrow,
+          compact && styles.arrowCompact,
+          { backgroundColor: theme.surfaceContainerHigh },
+        ]}>
+        <Ionicons name="arrow-forward" size={compact ? 14 : 16} color={theme.textSecondary} />
       </View>
     </Pressable>
   );
@@ -83,6 +104,12 @@ const styles = StyleSheet.create({
     minHeight: 120,
     width: '100%',
   },
+  cardCompact: {
+    alignItems: 'flex-start',
+    gap: Spacing.three,
+    padding: Spacing.three,
+    minHeight: 0,
+  },
   pressed: { opacity: 0.97 },
   icon: {
     width: 52,
@@ -92,14 +119,26 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     flexShrink: 0,
   },
+  iconCompact: {
+    width: 44,
+    height: 44,
+    marginTop: 2,
+  },
   body: { flex: 1, gap: 4, minWidth: 0 },
   titleRow: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: Spacing.two,
+    minWidth: 0,
   },
-  title: { fontSize: 18, fontFamily: Font.headingSemi, flexShrink: 1 },
+  titleRowCompact: {
+    flexWrap: 'wrap',
+    alignItems: 'flex-start',
+  },
+  title: { flex: 1, fontSize: 18, fontFamily: Font.headingSemi, minWidth: 0 },
+  titleCompact: { fontSize: 16, lineHeight: 22 },
   desc: { fontSize: 14, lineHeight: 21 },
+  descCompact: { fontSize: 13, lineHeight: 19 },
   badge: {
     minWidth: 26,
     height: 26,
@@ -109,6 +148,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     flexShrink: 0,
   },
+  badgeCompact: {
+    minWidth: 24,
+    height: 24,
+    paddingHorizontal: 6,
+  },
   arrow: {
     flexShrink: 0,
     width: 36,
@@ -116,5 +160,10 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  arrowCompact: {
+    width: 30,
+    height: 30,
+    marginTop: 2,
   },
 });

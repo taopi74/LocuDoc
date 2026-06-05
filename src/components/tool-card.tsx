@@ -9,15 +9,20 @@ type Props = {
   width: number;
 };
 
+const COMPACT_CARD_WIDTH = 420;
+
 export function ToolCard({ feature, width }: Props) {
+  const compact = width < COMPACT_CARD_WIDTH;
+
   return (
     <View style={{ width }}>
       <ServiceRowCard
         icon={feature.icon}
         accent={feature.accent}
         title={feature.title}
-        description={feature.subtitle}
+        description={compact ? feature.tagline : feature.subtitle}
         badge={feature.badge}
+        compact={compact}
         onPress={() => router.push(feature.route)}
       />
     </View>

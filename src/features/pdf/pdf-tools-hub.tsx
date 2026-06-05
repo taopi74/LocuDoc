@@ -32,16 +32,20 @@ function columnsFor(width: number) {
   return 1;
 }
 
+const COMPACT_CARD_WIDTH = 420;
+
 function CategoryCard({
   category,
   toolCount,
   onPress,
   wide,
+  compact,
 }: {
   category: (typeof PDF_CATEGORY_META)[number];
   toolCount: number;
   onPress: () => void;
   wide: boolean;
+  compact: boolean;
 }) {
   return (
     <View style={wide ? styles.categoryHalf : undefined}>
@@ -51,6 +55,7 @@ function CategoryCard({
         title={category.label}
         description={category.description}
         badge={toolCount}
+        compact={compact}
         onPress={onPress}
       />
     </View>
@@ -66,6 +71,8 @@ function PdfToolCard({
   width: number;
   onPress: () => void;
 }) {
+  const compact = width < COMPACT_CARD_WIDTH;
+
   return (
     <View style={{ width }}>
       <ServiceRowCard
@@ -73,6 +80,7 @@ function PdfToolCard({
         accent={tool.accent}
         title={tool.title}
         description={tool.subtitle}
+        compact={compact}
         onPress={onPress}
       />
     </View>
@@ -185,6 +193,7 @@ export function PdfToolsHub() {
               toolCount={toolsForCategory(cat.id).length}
               onPress={() => setCategory(cat.id)}
               wide={wide}
+              compact={width < COMPACT_CARD_WIDTH}
             />
           ))}
         </View>

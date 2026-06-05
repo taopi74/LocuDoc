@@ -31,8 +31,10 @@ import {
 } from "@/constants/theme";
 import { useTheme } from "@/hooks/use-theme";
 
-const GAP = 28;
+const GRID_GAP_WIDE = 28;
+const GRID_GAP_NARROW = 16;
 const SIDEBAR_BREAKPOINT = 960;
+const STACKED_HEADER_BREAKPOINT = 640;
 
 function columnsFor(width: number) {
   if (width >= 560) return 2;
@@ -45,6 +47,8 @@ export default function HomeScreen() {
   const showSidebar = width >= SIDEBAR_BREAKPOINT;
   const showBottomNav = !showSidebar;
   const isWide = width >= 1024;
+  const stackHeader = showBottomNav && width < STACKED_HEADER_BREAKPOINT;
+  const gridGap = width < 560 ? GRID_GAP_NARROW : GRID_GAP_WIDE;
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState<"all" | "popular">("all");
   const [gridW, setGridW] = useState(0);
@@ -63,18 +67,26 @@ export default function HomeScreen() {
 
   const columns = columnsFor(gridW || width);
   const cardWidth = gridW
-    ? Math.floor((gridW - (columns - 1) * GAP) / columns)
+    ? Math.floor((gridW - (columns - 1) * gridGap) / columns)
     : undefined;
   const onGridLayout = (e: LayoutChangeEvent) =>
     setGridW(e.nativeEvent.layout.width);
 
   const Main = (
-    <View style={[contentWell, styles.main, isWide && styles.mainWide]}>
+    <View
+      style={[
+        contentWell,
+        styles.main,
+        showBottomNav && styles.mainMobile,
+        isWide && styles.mainWide,
+      ]}
+    >
       {/* Search */}
       <Reveal delay={0} distance={8}>
         <View
           style={[
             styles.topbar,
+            stackHeader && styles.topbarStacked,
             stickyTop,
             Platform.OS === "web" && styles.topbarStickyWeb,
           ]}
@@ -83,7 +95,7 @@ export default function HomeScreen() {
             <ThemedText
               type="smallBold"
               themeColor="primary"
-              style={styles.wordmark}
+              style={[styles.wordmark, stackHeader && styles.wordmarkStacked]}
             >
               {Brand.name}
             </ThemedText>
@@ -91,6 +103,7 @@ export default function HomeScreen() {
           <View
             style={[
               styles.search,
+              stackHeader && styles.searchStacked,
               cardShadow,
               {
                 backgroundColor: theme.card,
@@ -102,7 +115,11 @@ export default function HomeScreen() {
             <TextInput
               value={query}
               onChangeText={setQuery}
-              placeholder="Search utilities (PDF, resize, background…)"
+              placeholder={
+                stackHeader
+                  ? "Search tools (PDF, resize…)"
+                  : "Search utilities (PDF, resize, background…)"
+              }
               placeholderTextColor={theme.textMuted}
               style={[styles.searchInput, { color: theme.text }]}
               accessibilityLabel="Search utilities"
@@ -143,7 +160,7 @@ export default function HomeScreen() {
 
       {/* Tools header + filters */}
       <Reveal delay={Motion.stagger * 2} distance={10}>
-        <View style={styles.toolsHeader}>
+        <View style={[styles.toolsHeader, stackHeader && styles.toolsHeaderStacked]}>
           <View>
             <ThemedText type="subtitle" style={styles.toolsTitle}>
               All utilities
@@ -167,7 +184,7 @@ export default function HomeScreen() {
         </View>
       </Reveal>
 
-      <View style={styles.grid} onLayout={onGridLayout}>
+      <View style={[styles.grid, { gap: gridGap }]} onLayout={onGridLayout}>
         {cardWidth != null && (
           <>
             {filtered.map((f) => (
@@ -273,6 +290,10 @@ const styles = StyleSheet.create({
     gap: Spacing.four,
     width: '100%',
   },
+  mainMobile: {
+    paddingHorizontal: Spacing.three,
+    gap: Spacing.three,
+  },
   mainWide: {
     paddingHorizontal: 40,
     paddingVertical: Spacing.four,
@@ -283,6 +304,11 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: Spacing.three,
     width: "100%",
+  },
+  topbarStacked: {
+    flexDirection: "column",
+    alignItems: "stretch",
+    gap: Spacing.two,
   },
   topbarStickyWeb: {
     paddingTop: Spacing.two,
@@ -297,6 +323,10 @@ const styles = StyleSheet.create({
     fontFamily: Font.heading,
     flexShrink: 0,
   },
+  wordmarkStacked: {
+    fontSize: 22,
+    lineHeight: 28,
+  },
   search: {
     flex: 1,
     flexDirection: "row",
@@ -306,6 +336,7 @@ const styles = StyleSheet.create({
     borderRadius: Radius.lg,
     paddingHorizontal: Spacing.four,
     minHeight: 48,
+    minWidth: 0,
     ...Platform.select({
       web: {
         transitionProperty: "border-color, box-shadow",
@@ -313,12 +344,18 @@ const styles = StyleSheet.create({
       },
     }),
   },
+  searchStacked: {
+    width: "100%",
+    flex: undefined,
+    paddingHorizontal: Spacing.three,
+  },
   searchInput: {
     flex: 1,
     fontSize: 15,
     fontFamily: Font.regular,
     padding: 0,
     minHeight: 22,
+    minWidth: 0,
     ...(Platform.OS === "web" ? { outlineStyle: "none" } : {}),
   } as object,
   banner: {
@@ -357,6 +394,10 @@ const styles = StyleSheet.create({
     flexWrap: "wrap",
     gap: Spacing.three,
   },
+  toolsHeaderStacked: {
+    alignItems: "flex-start",
+    gap: Spacing.two,
+  },
   toolsTitle: {
     fontSize: 22,
     letterSpacing: -0.35,
@@ -364,7 +405,7 @@ const styles = StyleSheet.create({
   },
   filters: { flexDirection: "row", gap: Spacing.two },
 
-  grid: { flexDirection: "row", flexWrap: "wrap", gap: GAP },
+  grid: { flexDirection: "row", flexWrap: "wrap" },
   noResults: { padding: Spacing.four, width: "100%", textAlign: "center" },
 
   footer: {

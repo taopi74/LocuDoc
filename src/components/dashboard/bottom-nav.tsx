@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
-import { router, usePathname } from 'expo-router';
+import { router, usePathname, type Href } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import { Animated, Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { ThemedText } from '@/components/themed-text';
+import { FEATURES } from '@/constants/features';
 import { Motion } from '@/constants/motion';
 import { Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
@@ -13,20 +14,39 @@ type Tab = {
   id: string;
   label: string;
   icon: React.ComponentProps<typeof Ionicons>['name'];
-  route: '/' | null;
+  route: Href | null;
+  isActive: (pathname: string) => boolean;
 };
 
+function isToolRoute(pathname: string) {
+  return FEATURES.some((f) => {
+    const route = f.route as string;
+    return pathname === route || (f.id === 'pdf-tools' && pathname.startsWith('/pdf-tools'));
+  });
+}
+
 const TABS: Tab[] = [
-  { id: 'home', label: 'Home', icon: 'home', route: '/' },
-  { id: 'tools', label: 'Tools', icon: 'apps', route: '/' },
-  { id: 'more', label: 'More', icon: 'ellipsis-horizontal', route: null },
+  {
+    id: 'home',
+    label: 'Home',
+    icon: 'home',
+    route: '/',
+    isActive: (pathname) => pathname === '/' || pathname === '',
+  },
+  {
+    id: 'tools',
+    label: 'Tools',
+    icon: 'apps',
+    route: '/pdf-tools' as Href,
+    isActive: (pathname) => isToolRoute(pathname),
+  },
+  { id: 'more', label: 'More', icon: 'ellipsis-horizontal', route: null, isActive: () => false },
 ];
 
 export function BottomNav() {
   const theme = useTheme();
   const pathname = usePathname();
   const insets = useSafeAreaInsets();
-  const onHome = pathname === '/';
   const slide = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -52,7 +72,7 @@ export function BottomNav() {
         barShadow,
       ]}>
       {TABS.map((tab) => {
-        const active = tab.route !== null && onHome;
+        const active = tab.isActive(pathname);
         const disabled = tab.route === null;
 
         return (
